@@ -40,6 +40,21 @@ public class Main {
                 + Objects.requireNonNull(result.getInsertedId()).asObjectId().getValue());
     }
 
+
+    public void createDocument(String creatorId, String documentContent, String workflowId, MongoClient mongoClient) {
+        MongoDatabase database = mongoClient.getDatabase("das");
+        MongoCollection<Document> collection = database.getCollection("documents");
+
+        Document doc =new Document()
+                .append("creator_id", creatorId)
+                .append("workflow_id", workflowId)
+                .append("document_content", documentContent)
+                .append("approved_status", new ArrayList<String>());
+
+        InsertOneResult result = collection.insertOne(doc);
+        System.out.println("Inserted a document with the following id: "
+                + Objects.requireNonNull(result.getInsertedId()).asObjectId().getValue());
+    }
     public static void main(String[] args) {
         BasicConfigurator.configure();
         ConnectionString connectionString = new ConnectionString("mongodb+srv://m001-student:m001-mongodb-basics@cluster0.lunvrpk.mongodb.net/?retryWrites=true&w=majority");
@@ -68,7 +83,12 @@ public class Main {
                 mongoClient
         );
 
-
+        mainObj.createDocument(
+                "62c7c4d371978b345496b606",
+                "This is a dummy document",
+                "62c7d90e1e1c9636c29a8ef6",
+                mongoClient
+        );
         System.out.println("Done");
         mongoClient.close();
     }
