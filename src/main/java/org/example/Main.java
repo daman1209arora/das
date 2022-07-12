@@ -8,13 +8,14 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.result.InsertOneResult;
 import org.apache.log4j.BasicConfigurator;
 import org.bson.Document;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 public class Main {
-    public void createWorkflow(String workflowName, List<String> userIds, MongoClient mongoClient) {
+    public void createWorkflow(String workflowName, List<String> userIds, @NotNull MongoClient mongoClient) {
         MongoDatabase database = mongoClient.getDatabase("das");
         MongoCollection<Document> collection = database.getCollection("workflows");
         Document workflow = new Document()
@@ -25,7 +26,7 @@ public class Main {
                 + Objects.requireNonNull(result.getInsertedId()).asObjectId().getValue());
     }
 
-    public void createUser(String name, String emailId, Boolean canCreateDoc, String role, MongoClient mongoClient) {
+    public void createUser(String name, String emailId, Boolean canCreateDoc, String role, @NotNull MongoClient mongoClient) {
         MongoDatabase database = mongoClient.getDatabase("das");
         MongoCollection<Document> collection = database.getCollection("users");
 
@@ -41,7 +42,7 @@ public class Main {
     }
 
 
-    public void createDocument(String creatorId, String documentContent, String workflowId, MongoClient mongoClient) {
+    public void createDocument(String creatorId, String documentContent, String workflowId, @NotNull MongoClient mongoClient) {
         MongoDatabase database = mongoClient.getDatabase("das");
         MongoCollection<Document> collection = database.getCollection("documents");
 
