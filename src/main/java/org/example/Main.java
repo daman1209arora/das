@@ -8,11 +8,20 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.result.InsertOneResult;
 import org.apache.log4j.BasicConfigurator;
 import org.bson.Document;
+import org.bson.types.ObjectId;
 import org.jetbrains.annotations.NotNull;
+
+import javax.mail.*;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Updates.set;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Properties;
 
 public class Main {
     public void createWorkflow(String workflowName, List<String> userIds, @NotNull MongoClient mongoClient) {
@@ -41,12 +50,11 @@ public class Main {
                 + Objects.requireNonNull(result.getInsertedId()).asObjectId().getValue());
     }
 
-
     public void createDocument(String creatorId, String documentContent, String workflowId, @NotNull MongoClient mongoClient) {
         MongoDatabase database = mongoClient.getDatabase("das");
         MongoCollection<Document> collection = database.getCollection("documents");
 
-        Document doc =new Document()
+        Document doc = new Document()
                 .append("creator_id", creatorId)
                 .append("workflow_id", workflowId)
                 .append("document_content", documentContent)
@@ -55,6 +63,86 @@ public class Main {
         InsertOneResult result = collection.insertOne(doc);
         System.out.println("Inserted a document with the following id: "
                 + Objects.requireNonNull(result.getInsertedId()).asObjectId().getValue());
+    }
+
+    public void approveDocument(String documentId, String userId, @NotNull MongoClient mongoClient) {
+        // Fetch document. Check if userId is next in order for approval
+        // If yes, approve, and send email to user next in order.
+        MongoDatabase database = mongoClient.getDatabase("das");
+        MongoCollection<Document> documentsCollection = database.getCollection("documents");
+        MongoCollection<Document> workflowsCollection = database.getCollection("workflows");
+        MongoCollection<Document> usersCollection = database.getCollection("users");
+
+        Document document = documentsCollection.find(eq("_id", new ObjectId(documentId))).first();
+        String workflowId = document.getString("workflow_id");
+        Document workflow = workflowsCollection.find(eq("_id", new ObjectId(workflowId))).first();
+
+        List<String> approvedStatus = document.getList("approved_status", String.class);
+        List<String> workflowApprovers = workflow.getList("members", String.class);
+
+        if(workflowApprovers.size() <= approvedStatus.size())
+            return;
+
+        String nextUserId = workflowApprovers.get(approvedStatus.size());
+        if(nextUserId.equals(userId)) {
+//        if(true) {
+            List<String> newApprovedStatus = new ArrayList<>(approvedStatus);
+            newApprovedStatus.add(nextUserId);
+            documentsCollection.updateOne(
+                    eq("_id", new ObjectId(documentId)),
+                    set("approved_status", newApprovedStatus)
+            );
+
+            if(workflowApprovers.size() <= 1+approvedStatus.size()) // no need to notify next user
+                return;
+
+            // Fetch nextUserId's email id
+            String notifyUserId = workflowApprovers.get(approvedStatus.size()+1);
+            Document user = usersCollection.find(eq("_id", new ObjectId(notifyUserId))).first();
+            String destEmailId = user.getString("email_id");
+            System.out.println("Destination Email ID:" + destEmailId);
+            String senderEmailId = "daman.arora@sprinklr.com";
+
+            final String uname = "daman.arora@sprinklr.com";
+            final String pwd = "";
+
+            //Set properties and their values
+            Properties props = new Properties();
+            props.put("mail.smtp.auth", true);
+            props.put("mail.smtp.starttls.enable", true);
+            props.put("mail.smtp.host", "smtp.gmail.com");
+            props.put("mail.smtp.port", "587");
+            props.put("mail.smtp.ssl.trust", "smtp.gmail.com");
+            props.put("mail.smtp.ssl.protocols", "TLSv1.2");
+
+
+            //Create a Session object & authenticate uid and pwd
+            Session session = Session.getInstance(props,
+                    new javax.mail.Authenticator() {
+                        protected PasswordAuthentication getPasswordAuthentication() {
+                            return new PasswordAuthentication(uname, pwd);
+                        }
+                    });
+
+            try {
+                //Create MimeMessage object & set values
+                Message message = new MimeMessage(session);
+                message.setFrom(new InternetAddress(senderEmailId));
+                message.setRecipients(Message.RecipientType.TO,InternetAddress.parse(destEmailId));
+                message.setSubject("This is test Subject");
+                message.setText(document.getString("document_content"));
+                //Now send the message
+                Transport.send(message);
+                System.out.println("Your email sent successfully....");
+            } catch (MessagingException exp) {
+                throw new RuntimeException(exp);
+            }
+
+            System.out.println("Finished");
+        }
+        else {
+            System.out.println("Can't approve! Not in order");
+        }
     }
     public static void main(String[] args) {
         BasicConfigurator.configure();
@@ -67,27 +155,32 @@ public class Main {
                 .build();
         MongoClient mongoClient = MongoClients.create(settings);
         Main mainObj = new Main();
-        mainObj.createUser(
-                "Ragy Thomas",
-                "ragy@gmail.com",
-                true,
-                "CEO",
-                mongoClient
-        );
-
-        List<String> userIds = new ArrayList<>();
-        userIds.add("62c7c6f7d5e862781fe1b0ed");
-        userIds.add("62c7cdb5f744d8b235264ff0");
-        mainObj.createWorkflow(
-                "Care Cloud",
-                userIds,
-                mongoClient
-        );
-
-        mainObj.createDocument(
+//        mainObj.createUser(
+//                "Ragy Thomas",
+//                "ragy@gmail.com",
+//                true,
+//                "CEO",
+//                mongoClient
+//        );
+//
+//        List<String> userIds = new ArrayList<>();
+//        userIds.add("62c7c6f7d5e862781fe1b0ed");
+//        userIds.add("62c7cdb5f744d8b235264ff0");
+//        mainObj.createWorkflow(
+//                "Care Cloud",
+//                userIds,
+//                mongoClient
+//        );
+//
+//        mainObj.createDocument(
+//                "62c7c4d371978b345496b606",
+//                "This is a dummy document",
+//                "62c7d90e1e1c9636c29a8ef6",
+//                mongoClient
+//        );
+        mainObj.approveDocument(
+                "62cc257bcbf513050d2e457f",
                 "62c7c4d371978b345496b606",
-                "This is a dummy document",
-                "62c7d90e1e1c9636c29a8ef6",
                 mongoClient
         );
         System.out.println("Done");
