@@ -1,8 +1,17 @@
 package org.example;
 
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.result.InsertOneResult;
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.bson.types.ObjectId;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
+
+import static com.mongodb.client.model.Filters.eq;
 
 public class User {
     @BsonId
@@ -40,7 +49,23 @@ public class User {
     public void setRole(String role) { this.role = role; }
     public void setCanCreateDoc(Boolean canCreateDoc) { this.canCreateDoc = canCreateDoc; }
 
+    @Override
     public String toString() {
         return "ID:" + id.toString() + " Name: " + name + " Email: " + emailId + " Role: " + role;
+    }
+    public static void createUser(String name, String emailId, Boolean canCreateDoc, String role, @NotNull MongoClient mongoClient) {
+        MongoDatabase database = mongoClient.getDatabase("das");
+        MongoCollection<User> collection = database.getCollection("users", User.class);
+        User user = new User(name, emailId, role, canCreateDoc);
+        InsertOneResult result = collection.insertOne(user);
+        System.out.println("Inserted a document with the following id: "
+                + Objects.requireNonNull(result.getInsertedId()).asObjectId().getValue());
+    }
+
+    public static void searchUserById(String userId, @NotNull MongoClient mongoClient) {
+        MongoDatabase database = mongoClient.getDatabase("das");
+        MongoCollection<User> usersCollection = database.getCollection("users", User.class);
+        User user = usersCollection.find(eq("_id", new ObjectId(userId))).first();
+        System.out.println(user);
     }
 }

@@ -30,33 +30,6 @@ import java.util.Properties;
 import org.example.User;
 
 public class Main {
-    public void createWorkflow(String workflowName, List<String> userIds, @NotNull MongoClient mongoClient) {
-        MongoDatabase database = mongoClient.getDatabase("das");
-        MongoCollection<Workflow> collection = database.getCollection("workflows", Workflow.class);
-        Workflow workflow = new Workflow(workflowName, userIds);
-        InsertOneResult result = collection.insertOne(workflow);
-        System.out.println("Inserted a document with the following id: "
-                + Objects.requireNonNull(result.getInsertedId()).asObjectId().getValue());
-    }
-
-    public void createUser(String name, String emailId, Boolean canCreateDoc, String role, @NotNull MongoClient mongoClient) {
-        MongoDatabase database = mongoClient.getDatabase("das");
-        MongoCollection<User> collection = database.getCollection("users", User.class);
-        User user = new User(name, emailId, role, canCreateDoc);
-        InsertOneResult result = collection.insertOne(user);
-        System.out.println("Inserted a document with the following id: "
-                + Objects.requireNonNull(result.getInsertedId()).asObjectId().getValue());
-    }
-
-    public void createArticle(String creatorId, String documentContent, String workflowId, @NotNull MongoClient mongoClient) {
-        MongoDatabase database = mongoClient.getDatabase("das");
-        MongoCollection<Article> collection = database.getCollection("articles", Article.class);
-        Article article = new Article(creatorId, workflowId, documentContent);
-        InsertOneResult result = collection.insertOne(article);
-        System.out.println("Inserted a document with the following id: "
-                + Objects.requireNonNull(result.getInsertedId()).asObjectId().getValue());
-    }
-
     public void disapproveDocument(String documentId, String userId, String comment, @NotNull MongoClient mongoClient) {
         MongoDatabase database = mongoClient.getDatabase("das");
         MongoCollection<Document> documentsCollection = database.getCollection("documents");
@@ -207,28 +180,6 @@ public class Main {
         }
     }
 
-
-    public void searchUserById(String userId, @NotNull MongoClient mongoClient) {
-        MongoDatabase database = mongoClient.getDatabase("das");
-        MongoCollection<User> usersCollection = database.getCollection("users", User.class);
-        User user = usersCollection.find(eq("_id", new ObjectId(userId))).first();
-        System.out.println(user);
-    }
-
-    public void searchArticleById(String articleId, @NotNull MongoClient mongoClient) {
-        MongoDatabase database = mongoClient.getDatabase("das");
-        MongoCollection<Article> articlesCollection = database.getCollection("articles", Article.class);
-        Article article = articlesCollection.find(eq("_id", new ObjectId(articleId))).first();
-        System.out.println(article);
-    }
-
-    public void searchWorkflowById(String workflowId, @NotNull MongoClient mongoClient) {
-        MongoDatabase database = mongoClient.getDatabase("das");
-        MongoCollection<Workflow> workflowsCollection = database.getCollection("workflows", Workflow.class);
-        Workflow workflow = workflowsCollection.find(eq("_id", new ObjectId(workflowId))).first();
-        System.out.println(workflow);
-    }
-
     public static void main(String[] args) {
         BasicConfigurator.configure();
         ConnectionString connectionString = new ConnectionString("mongodb+srv://m001-student:m001-mongodb-basics@cluster0.lunvrpk.mongodb.net/?retryWrites=true&w=majority");
@@ -254,16 +205,16 @@ public class Main {
 //                "Software version needs to be updated.",
 //                mongoClient
 //        );
-
-//        mainObj.createUser("Dummy User", "dummy@gmail.com", false, "Intern", mongoClient);
-//        mainObj.searchUserById("62d6542bb021ff679953b25c", mongoClient);
-//        mainObj.createArticle("62c7c4d371978b345496b606", "Testing everything", "62c7d90e1e1c9636c29a8ef6", mongoClient);
-//        mainObj.searchArticleById("62d6550acb48a44509e52824", mongoClient);
+//
+//        User.createUser("Dummy User", "dummy@gmail.com", false, "Intern", mongoClient);
+//        User.searchUserById("62d6542bb021ff679953b25c", mongoClient);
+//        Article.createArticle("62c7c4d371978b345496b606", "Testing everything", "62c7d90e1e1c9636c29a8ef6", mongoClient);
+//        Article.searchArticleById("62d6550acb48a44509e52824", mongoClient);
 //        List<String> userIds = new ArrayList<>();
 //        userIds.add("62c7c6f7d5e862781fe1b0ed");
 //        userIds.add("62c7cdb5f744d8b235264ff0");
-//        mainObj.createWorkflow("Software Dev", userIds, mongoClient);
-//        mainObj.searchWorkflowById("62c7d90e1e1c9636c29a8ef6", mongoClient);
+//        Workflow.createWorkflow("Software Dev", userIds, mongoClient);
+//        Workflow.searchWorkflowById("62c7d90e1e1c9636c29a8ef6", mongoClient);
 
         System.out.println("Done");
         mongoClient.close();
