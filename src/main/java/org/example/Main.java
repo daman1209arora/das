@@ -5,7 +5,6 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.result.InsertOneResult;
 import org.apache.log4j.BasicConfigurator;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -192,8 +191,7 @@ public class Main {
                 .serverApi(ServerApi.builder().version(ServerApiVersion.V1).build())
                 .build();
         MongoClient mongoClient = MongoClients.create(settings);
-        Main mainObj = new Main();
-
+//        Main mainObj = new Main();
 //        mainObj.approveDocument(
 //                "62cc257bcbf513050d2e457f",
 //                "62c7c4d371978b345496b606",
@@ -215,6 +213,7 @@ public class Main {
 //        userIds.add("62c7cdb5f744d8b235264ff0");
 //        Workflow.createWorkflow("Software Dev", userIds, mongoClient);
 //        Workflow.searchWorkflowById("62c7d90e1e1c9636c29a8ef6", mongoClient);
+        Task.createTask("62d6550acb48a44509e52824", "62c7c4d371978b345496b606", "62c7c6f7d5e862781fe1b0ed", "", mongoClient);
 
         System.out.println("Done");
         mongoClient.close();
