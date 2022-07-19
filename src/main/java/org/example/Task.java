@@ -51,7 +51,7 @@ public class Task {
 
     @Override
     public String toString() {
-        return "ID:" + id.toString() + " ArticleId: " + articleId + " SentFromId: " + sentFromId + " SentToId: " + sentToId;
+        return "ID:" + id.toString() + " ArticleId: " + articleId + " SentFromId: " + sentFromId + " SentToId: " + sentToId + " Comment: " + comment;
     }
     public static void createTask(String articleId, String sentFromId, String sentToId, String comment, @NotNull MongoClient mongoClient) {
         MongoDatabase database = mongoClient.getDatabase("das");

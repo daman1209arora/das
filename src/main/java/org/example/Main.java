@@ -213,8 +213,8 @@ public class Main {
 //        userIds.add("62c7cdb5f744d8b235264ff0");
 //        Workflow.createWorkflow("Software Dev", userIds, mongoClient);
 //        Workflow.searchWorkflowById("62c7d90e1e1c9636c29a8ef6", mongoClient);
-        Task.createTask("62d6550acb48a44509e52824", "62c7c4d371978b345496b606", "62c7c6f7d5e862781fe1b0ed", "", mongoClient);
-
+//        Task.createTask("62d6550acb48a44509e52824", "62c7c4d371978b345496b606", "62c7c6f7d5e862781fe1b0ed", "", mongoClient);
+        Task.searchTaskById("62d65c0e79150f2642e21070", mongoClient);
         System.out.println("Done");
         mongoClient.close();
     }
