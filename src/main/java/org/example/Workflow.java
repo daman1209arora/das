@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ForkJoinPool;
 
 import static com.mongodb.client.model.Filters.eq;
 
@@ -41,19 +42,21 @@ public class Workflow {
     public String toString() {
         return "ID: " + id.toString() + " Workflow Name: " + workflowName + " Members: [" + String.join(",",members) + "]";
     }
-    public static void createWorkflow(String workflowName, List<String> userIds, @NotNull MongoClient mongoClient) {
+    public static String createWorkflow(String workflowName, List<String> userIds, @NotNull MongoClient mongoClient) {
         MongoDatabase database = mongoClient.getDatabase("das");
         MongoCollection<Workflow> collection = database.getCollection("workflows", Workflow.class);
         Workflow workflow = new Workflow(workflowName, userIds);
         InsertOneResult result = collection.insertOne(workflow);
         System.out.println("Inserted a document with the following id: "
                 + Objects.requireNonNull(result.getInsertedId()).asObjectId().getValue());
+        return Objects.requireNonNull(result.getInsertedId()).asObjectId().getValue().toString();
     }
 
-    public static void searchWorkflowById(String workflowId, @NotNull MongoClient mongoClient) {
+    public static Workflow searchWorkflowById(String workflowId, @NotNull MongoClient mongoClient) {
         MongoDatabase database = mongoClient.getDatabase("das");
         MongoCollection<Workflow> workflowsCollection = database.getCollection("workflows", Workflow.class);
         Workflow workflow = workflowsCollection.find(eq("_id", new ObjectId(workflowId))).first();
         System.out.println(workflow);
+        return workflow;
     }
 }

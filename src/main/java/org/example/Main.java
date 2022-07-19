@@ -191,22 +191,14 @@ public class Main {
                 .serverApi(ServerApi.builder().version(ServerApiVersion.V1).build())
                 .build();
         MongoClient mongoClient = MongoClients.create(settings);
+//                ----------------CRUD Testing---------------------
 //        Main mainObj = new Main();
-//        mainObj.approveDocument(
-//                "62cc257bcbf513050d2e457f",
-//                "62c7c4d371978b345496b606",
-//                mongoClient
-//        );
-//        mainObj.disapproveDocument(
-//                "62cc257bcbf513050d2e457f",
-//                "62c7c6f7d5e862781fe1b0ed",
-//                "Software version needs to be updated.",
-//                mongoClient
-//        );
+//        mainObj.approveDocument("62cc257bcbf513050d2e457f", "62c7c4d371978b345496b606", mongoClient);
+//        mainObj.disapproveDocument("62cc257bcbf513050d2e457f", "62c7c6f7d5e862781fe1b0ed", "Software version needs to be updated.", mongoClient);
 //
 //        User.createUser("Dummy User", "dummy@gmail.com", false, "Intern", mongoClient);
 //        User.searchUserById("62d6542bb021ff679953b25c", mongoClient);
-//        Article.createArticle("62c7c4d371978b345496b606", "Testing everything", "62c7d90e1e1c9636c29a8ef6", mongoClient);
+//        Article.createArticle("62c7c4d371978b345496b606", "Rejection flow check", "62c7d90e1e1c9636c29a8ef6", mongoClient);
 //        Article.searchArticleById("62d6550acb48a44509e52824", mongoClient);
 //        List<String> userIds = new ArrayList<>();
 //        userIds.add("62c7c6f7d5e862781fe1b0ed");
@@ -214,7 +206,25 @@ public class Main {
 //        Workflow.createWorkflow("Software Dev", userIds, mongoClient);
 //        Workflow.searchWorkflowById("62c7d90e1e1c9636c29a8ef6", mongoClient);
 //        Task.createTask("62d6550acb48a44509e52824", "62c7c4d371978b345496b606", "62c7c6f7d5e862781fe1b0ed", "", mongoClient);
-        Task.searchTaskById("62d65c0e79150f2642e21070", mongoClient);
+//        Task.searchTaskById("62d65c0e79150f2642e21070", mongoClient);
+
+
+        // 62c7c4d371978b345496b606 - Daman
+        // 62c7c6f7d5e862781fe1b0ed - Nitya
+        // 62c7cdb5f744d8b235264ff0 - Vishwa
+        // 62c7d7c4dcdd7042b8a2f92a - Ragy
+//        String taskId = Approval.initiateArticleApproval("62c7c4d371978b345496b606", "62d6550acb48a44509e52824", mongoClient);
+//        taskId = Approval.finishTask("62c7c6f7d5e862781fe1b0ed", taskId, "APPROVE", "", mongoClient);
+//        taskId = Approval.finishTask("62c7cdb5f744d8b235264ff0", taskId, "APPROVE", "", mongoClient);
+
+
+        String taskId = Approval.initiateArticleApproval("62c7c4d371978b345496b606", "62d67a8c3285646616677324", mongoClient);
+        taskId = Approval.finishTask("62c7c6f7d5e862781fe1b0ed", taskId, "APPROVE", "", mongoClient);
+        taskId = Approval.finishTask("62c7cdb5f744d8b235264ff0", taskId, "REJECT", "", mongoClient);
+        taskId = Approval.initiateArticleApproval("62c7c4d371978b345496b606", "62d67a8c3285646616677324", mongoClient);
+        taskId = Approval.finishTask("62c7c6f7d5e862781fe1b0ed", taskId, "APPROVE", "", mongoClient);
+        taskId = Approval.finishTask("62c7cdb5f744d8b235264ff0", taskId, "APPROVE", "", mongoClient);
+
         System.out.println("Done");
         mongoClient.close();
     }
