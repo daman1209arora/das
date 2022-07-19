@@ -8,6 +8,8 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.result.InsertOneResult;
 import org.apache.log4j.BasicConfigurator;
 import org.bson.Document;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.pojo.PojoCodecProvider;
 import org.bson.types.ObjectId;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,19 +20,20 @@ import javax.mail.internet.MimeMessage;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Updates.combine;
 import static com.mongodb.client.model.Updates.set;
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
+import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+import org.example.User;
 
 public class Main {
     public void createWorkflow(String workflowName, List<String> userIds, @NotNull MongoClient mongoClient) {
         MongoDatabase database = mongoClient.getDatabase("das");
-        MongoCollection<Document> collection = database.getCollection("workflows");
-        Document workflow = new Document()
-                .append("workflow_name", workflowName)
-                .append("members", userIds);
+        MongoCollection<Workflow> collection = database.getCollection("workflows", Workflow.class);
+        Workflow workflow = new Workflow(workflowName, userIds);
         InsertOneResult result = collection.insertOne(workflow);
         System.out.println("Inserted a document with the following id: "
                 + Objects.requireNonNull(result.getInsertedId()).asObjectId().getValue());
@@ -38,31 +41,18 @@ public class Main {
 
     public void createUser(String name, String emailId, Boolean canCreateDoc, String role, @NotNull MongoClient mongoClient) {
         MongoDatabase database = mongoClient.getDatabase("das");
-        MongoCollection<Document> collection = database.getCollection("users");
-
-        Document user = new Document()
-                .append("name", name)
-                .append("email_id", emailId)
-                .append("can_create_doc", canCreateDoc)
-                .append("role", role);
-
+        MongoCollection<User> collection = database.getCollection("users", User.class);
+        User user = new User(name, emailId, role, canCreateDoc);
         InsertOneResult result = collection.insertOne(user);
         System.out.println("Inserted a document with the following id: "
                 + Objects.requireNonNull(result.getInsertedId()).asObjectId().getValue());
     }
 
-    public void createDocument(String creatorId, String documentContent, String workflowId, @NotNull MongoClient mongoClient) {
+    public void createArticle(String creatorId, String documentContent, String workflowId, @NotNull MongoClient mongoClient) {
         MongoDatabase database = mongoClient.getDatabase("das");
-        MongoCollection<Document> collection = database.getCollection("documents");
-
-        Document doc = new Document()
-                .append("creator_id", creatorId)
-                .append("workflow_id", workflowId)
-                .append("document_content", documentContent)
-                .append("approved_status", new ArrayList<String>())
-                .append("comments", "");
-
-        InsertOneResult result = collection.insertOne(doc);
+        MongoCollection<Article> collection = database.getCollection("articles", Article.class);
+        Article article = new Article(creatorId, workflowId, documentContent);
+        InsertOneResult result = collection.insertOne(article);
         System.out.println("Inserted a document with the following id: "
                 + Objects.requireNonNull(result.getInsertedId()).asObjectId().getValue());
     }
@@ -216,51 +206,65 @@ public class Main {
             System.out.println("Can't approve! Not in order");
         }
     }
+
+
+    public void searchUserById(String userId, @NotNull MongoClient mongoClient) {
+        MongoDatabase database = mongoClient.getDatabase("das");
+        MongoCollection<User> usersCollection = database.getCollection("users", User.class);
+        User user = usersCollection.find(eq("_id", new ObjectId(userId))).first();
+        System.out.println(user);
+    }
+
+    public void searchArticleById(String articleId, @NotNull MongoClient mongoClient) {
+        MongoDatabase database = mongoClient.getDatabase("das");
+        MongoCollection<Article> articlesCollection = database.getCollection("articles", Article.class);
+        Article article = articlesCollection.find(eq("_id", new ObjectId(articleId))).first();
+        System.out.println(article);
+    }
+
+    public void searchWorkflowById(String workflowId, @NotNull MongoClient mongoClient) {
+        MongoDatabase database = mongoClient.getDatabase("das");
+        MongoCollection<Workflow> workflowsCollection = database.getCollection("workflows", Workflow.class);
+        Workflow workflow = workflowsCollection.find(eq("_id", new ObjectId(workflowId))).first();
+        System.out.println(workflow);
+    }
+
     public static void main(String[] args) {
         BasicConfigurator.configure();
         ConnectionString connectionString = new ConnectionString("mongodb+srv://m001-student:m001-mongodb-basics@cluster0.lunvrpk.mongodb.net/?retryWrites=true&w=majority");
+        CodecRegistry pojoCodecRegistry = fromProviders(PojoCodecProvider.builder().automatic(true).build());
+        CodecRegistry codecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(), pojoCodecRegistry);
+
         MongoClientSettings settings = MongoClientSettings.builder()
                 .applyConnectionString(connectionString)
-                .serverApi(ServerApi.builder()
-                        .version(ServerApiVersion.V1)
-                        .build())
+                .codecRegistry(codecRegistry)
+                .serverApi(ServerApi.builder().version(ServerApiVersion.V1).build())
                 .build();
         MongoClient mongoClient = MongoClients.create(settings);
         Main mainObj = new Main();
-//        mainObj.createUser(
-//                "Ragy Thomas",
-//                "ragy@gmail.com",
-//                true,
-//                "CEO",
-//                mongoClient
-//        );
-//
-//        List<String> userIds = new ArrayList<>();
-//        userIds.add("62c7c6f7d5e862781fe1b0ed");
-//        userIds.add("62c7cdb5f744d8b235264ff0");
-//        mainObj.createWorkflow(
-//                "Care Cloud",
-//                userIds,
-//                mongoClient
-//        );
-//
-//        mainObj.createDocument(
-//                "62c7c4d371978b345496b606",
-//                "This is a dummy document",
-//                "62c7d90e1e1c9636c29a8ef6",
-//                mongoClient
-//        );
+
 //        mainObj.approveDocument(
 //                "62cc257bcbf513050d2e457f",
 //                "62c7c4d371978b345496b606",
 //                mongoClient
 //        );
-        mainObj.disapproveDocument(
-                "62cc257bcbf513050d2e457f",
-                "62c7c6f7d5e862781fe1b0ed",
-                "Software version needs to be updated.",
-                mongoClient
-        );
+//        mainObj.disapproveDocument(
+//                "62cc257bcbf513050d2e457f",
+//                "62c7c6f7d5e862781fe1b0ed",
+//                "Software version needs to be updated.",
+//                mongoClient
+//        );
+
+//        mainObj.createUser("Dummy User", "dummy@gmail.com", false, "Intern", mongoClient);
+//        mainObj.searchUserById("62d6542bb021ff679953b25c", mongoClient);
+//        mainObj.createArticle("62c7c4d371978b345496b606", "Testing everything", "62c7d90e1e1c9636c29a8ef6", mongoClient);
+//        mainObj.searchArticleById("62d6550acb48a44509e52824", mongoClient);
+//        List<String> userIds = new ArrayList<>();
+//        userIds.add("62c7c6f7d5e862781fe1b0ed");
+//        userIds.add("62c7cdb5f744d8b235264ff0");
+//        mainObj.createWorkflow("Software Dev", userIds, mongoClient);
+//        mainObj.searchWorkflowById("62c7d90e1e1c9636c29a8ef6", mongoClient);
+
         System.out.println("Done");
         mongoClient.close();
     }
